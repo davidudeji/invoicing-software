@@ -1,27 +1,27 @@
-import pool from "@/lib/db"
-import {NextResponse} from "next/server"
+import { db } from "@/lib/db"
+import { NextResponse } from "next/server"
 
-export async function POST(req: Request){
-  try{
-   const {name, email, value, description} = await req.json();
-   if (!name || !email || !value){
-      return NextResponse.json(
-         {error: "Missing required fields"},
-         {status: 400}
-      );
-   }
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const { name, customer, value, description } = body
 
-   const query = `
-   INSERT INTO  billing (name, email, value, description)
-   VALUES (?, ?, ?, ?)
-   `;
+    const invoice = await db.invoice.create({
+      data: {
+        name,
+        customer,
+        value,
+        description,
+      },
+    })
 
-   await pool.execute(query, [name, email, value, description]);
-
-   return NextResponse.json({message: "Billing saved successfully"});
-  }catch(error){
-   return NextResponse.json({
-      error: "Database error"
-   },{status: 500});
+    return NextResponse.json(invoice, { status: 201 })
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json(
+      { error: "Failed to create invoice" },
+      { status: 500 }
+    )
   }
 }
+
